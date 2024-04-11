@@ -7,7 +7,7 @@ pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
 
     // Init ClamAV. If this is successful, cl_init returns CL_SUCCESS
-    var c_init_status: c_uint = clamav.cl_init(clamav.CL_INIT_DEFAULT);
+    const c_init_status: c_uint = clamav.cl_init(clamav.CL_INIT_DEFAULT);
 
     if (c_init_status != clamav.CL_SUCCESS) {
         // Failed to init ClamAV.
