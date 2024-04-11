@@ -46,9 +46,6 @@ pub fn build(b: *std.Build) void {
 
             defer b.allocator.free(openssl_lib_path);
 
-            std.debug.print("openssl include path : {s}\n", .{openssl_path_include_path});
-            std.debug.print("openssl library path : {s}\n", .{openssl_lib_path});
-
             exe.addIncludePath(.{ .path = openssl_path_include_path });
             exe.addLibraryPath(.{ .path = openssl_lib_path });
 
@@ -59,7 +56,6 @@ pub fn build(b: *std.Build) void {
 
     exe.linkSystemLibrary("clamav");
     exe.linkLibC();
-    // exe.linkSystemLibrary("clamav");
     b.installArtifact(exe);
 
     const run_cmd = b.addRunArtifact(exe);
