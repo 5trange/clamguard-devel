@@ -1,8 +1,6 @@
 const std = @import("std");
 const buildin = @import("builtin");
 const unicode = std.unicode;
-const tag = buildin.os.tag;
-const join = std.fs.path.join;
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
@@ -14,36 +12,54 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
-    switch (tag) {
+    switch (target.result.os.tag) {
         .windows => {
-            const clamav_path = b.env_map.get("CLAMAV_DIR") orelse "C:\\clamav";
-            std.debug.print("clamav path is {s}\n", .{clamav_path});
-            const clamav_include_raw = std.fmt.allocPrint(b.allocator, "{s}\\include", .{clamav_path});
-            const clamav_include = clamav_include_raw catch "C:\\clamav\\include";
-            defer b.allocator.free(clamav_include);
+            const clamav_path = std.process.getEnvVarOwned(b.allocator, "CLAMAV_PATH") catch |err| {
+                std.debug.print("ERROR : {}", .{err});
+                return;
+            };
+            defer b.allocator.free(clamav_path);
+            const clamav_header_path = std.fmt.allocPrint(b.allocator, "{s}\\include", .{clamav_path}) catch |err| {
+                std.debug.print("ERROR : failed to allocate the string in clamav_header_path : {}", .{err});
+                return;
+            };
+            defer b.allocator.free(clamav_header_path);
 
-            exe.addIncludePath(clamav_include);
-            exe.addLibraryPath(clamav_path);
+            exe.addIncludePath(.{ .path = clamav_header_path });
+            exe.addLibraryPath(.{ .path = clamav_path });
 
-            const openssl_path = b.env_map.get("OPENSSLDIR") orelse "C:\\openssl";
-            std.debug.print("openssl path is {s}\n", .{openssl_path});
-            const openssl_lib_raw = std.fmt.allocPrint(b.allocator, "{s}\\lib", .{openssl_path});
-            const openssl_lib = openssl_lib_raw catch "C:\\openssl\\lib";
-            defer b.allocator.free(openssl_lib);
-            const openssl_include_raw = std.fmt.allocPrint(b.allocator, "{s}\\include", .{openssl_path});
-            const openssl_include = openssl_include_raw catch "C:\\openssl\\include";
-            defer b.allocator.free(openssl_include);
+            const openssl_path = std.process.getEnvVarOwned(b.allocator, "OPENSSL_PATH") catch |err| {
+                std.debug.print("ERROR : {}", .{err});
+                return;
+            };
+            defer b.allocator.free(openssl_path);
+            const openssl_path_include_path = std.fmt.allocPrint(b.allocator, "{s}\\include", .{openssl_path}) catch |err| {
+                std.debug.print("ERROR : failed to allocate the string in openssl_path_include_path : {}", .{err});
+                return;
+            };
+            defer b.allocator.free(openssl_path_include_path);
 
-            exe.addLibraryPath(openssl_lib);
-            exe.addIncludePath(openssl_include);
+            const openssl_lib_path = std.fmt.allocPrint(b.allocator, "{s}\\lib\\VC\\x64\\MD", .{openssl_path}) catch |err| {
+                std.debug.print("ERROR : failed to allocate the string in openssl_lib_path : {}", .{err});
+                return;
+            };
 
-            exe.linkSystemLibrary("libssl");
+            defer b.allocator.free(openssl_lib_path);
+
+            std.debug.print("openssl include path : {s}\n", .{openssl_path_include_path});
+            std.debug.print("openssl library path : {s}\n", .{openssl_lib_path});
+
+            exe.addIncludePath(.{ .path = openssl_path_include_path });
+            exe.addLibraryPath(.{ .path = openssl_lib_path });
+
+            exe.linkSystemLibrary("openssl");
         },
         else => {},
     }
 
-    exe.linkSystemLibrary("c");
     exe.linkSystemLibrary("clamav");
+    exe.linkLibC();
+    // exe.linkSystemLibrary("clamav");
     b.installArtifact(exe);
 
     const run_cmd = b.addRunArtifact(exe);
