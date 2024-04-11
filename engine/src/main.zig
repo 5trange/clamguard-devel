@@ -27,7 +27,7 @@ pub fn main() !void {
     try stdout.print("SUCCESSFULLY CREATED AN ENGINE\n", .{});
 
     // Print the default database directory.
-    try stdout.print("DEFAULT DATABASE DIRECTORY {any}\n", .{clamav.cl_retdbdir()});
+    try stdout.print("DEFAULT DATABASE DIRECTORY {s}\n", .{clamav.cl_retdbdir()});
 }
 
 pub fn create_engine() !void {}
