@@ -7,7 +7,7 @@ pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
 
     // Init ClamAV. If this is successful, cl_init returns CL_SUCCESS
-    var c_init_status: c_uint = clamav.cl_init(clamav.CL_INIT_DEFAULT);
+    const c_init_status: c_uint = clamav.cl_init(clamav.CL_INIT_DEFAULT);
 
     if (c_init_status != clamav.CL_SUCCESS) {
         // Failed to init ClamAV.
@@ -27,7 +27,13 @@ pub fn main() !void {
     try stdout.print("SUCCESSFULLY CREATED AN ENGINE\n", .{});
 
     // Print the default database directory.
-    try stdout.print("DEFAULT DATABASE DIRECTORY {any}\n", .{clamav.cl_retdbdir()});
+    try stdout.print("DEFAULT DATABASE DIRECTORY {s}\n", .{clamav.cl_retdbdir()});
+
+    const c_exit_status = clamav.cl_engine_free(engine);
+    if (c_exit_status != clamav.CL_SUCCESS) {
+        try stdout.print("FAILED to FREE THE LIBCLAMAV\n", .{});
+        return;
+    }
 }
 
 pub fn create_engine() !void {}
